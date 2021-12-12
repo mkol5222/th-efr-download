@@ -7,25 +7,25 @@ $TH_SECRET = "and secrets"
 $EP_KEY = "bring your own API keys"
 $EP_SECRET = "and secrets"
 function New-CpPortalSession ($key, $secret) {
-    $body = @{
-        clientId  = $key;
-        accessKey = $secret
-    } | ConvertTo-Json
-    $res = Invoke-RestMethod -Uri "https://cloudinfra-gw.portal.checkpoint.com/auth/external" `
-        -Headers @{"Content-Type" = "application/json" } `
-        -Body $body -Method Post
-    $Script:cpPortalToken = $res.data.token
-    $Script:cpPortalToken
+  $body = @{
+    clientId  = $key;
+    accessKey = $secret
+  } | ConvertTo-Json
+  $res = Invoke-RestMethod -Uri "https://cloudinfra-gw.portal.checkpoint.com/auth/external" `
+    -Headers @{"Content-Type" = "application/json" } `
+    -Body $body -Method Post
+  $Script:cpPortalToken = $res.data.token
+  $Script:cpPortalToken
 }
 
 function New-CpEpmSession {
-    $url = "https://cloudinfra-gw.portal.checkpoint.com/app/endpoint-web-mgmt/webmgmt/graphql" 
-    $portalToken = $Script:cpPortalToken
-    $headers = @{ 
-        "Content-Type"  = "application/json";
-        "Authorization" = "Bearer ${portalToken}"
-    }
-    $query = @'
+  $url = "https://cloudinfra-gw.portal.checkpoint.com/app/endpoint-web-mgmt/webmgmt/graphql" 
+  $portalToken = $Script:cpPortalToken
+  $headers = @{ 
+    "Content-Type"  = "application/json";
+    "Authorization" = "Bearer ${portalToken}"
+  }
+  $query = @'
     query Login {
         loginExternal {
           token
@@ -43,32 +43,32 @@ function New-CpEpmSession {
       }
 '@
 
-    $vars = @{}
+  $vars = @{}
 
-    $body = @{
-        query     = $query;
-        variables = $vars
-    } | ConvertTo-Json -Depth 10
+  $body = @{
+    query     = $query;
+    variables = $vars
+  } | ConvertTo-Json -Depth 10
 
-    $res = Invoke-RestMethod -Uri $url `
-        -Method Post `
-        -Headers $headers `
-        -Body $body 
+  $res = Invoke-RestMethod -Uri $url `
+    -Method Post `
+    -Headers $headers `
+    -Body $body 
 
-    $Script:cpEpmToken = $res.data.loginExternal.token
-    $Script:cpEpmToken
+  $Script:cpEpmToken = $res.data.loginExternal.token
+  $Script:cpEpmToken
 }
 
 function Get-CpThIncident {
-    $url = "https://cloudinfra-gw.portal.checkpoint.com/app/threathunting/prod-gcp-apollo/" 
-    $portalToken = $Script:cpPortalToken
+  $url = "https://cloudinfra-gw.portal.checkpoint.com/app/threathunting/prod-gcp-apollo/" 
+  $portalToken = $Script:cpPortalToken
     
-    $headers = @{
-        'Content-Type'  = 'application/json';
-        'Authorization' = "Bearer $portalToken"
-    }
+  $headers = @{
+    'Content-Type'  = 'application/json';
+    'Authorization' = "Bearer $portalToken"
+  }
 
-    $variablesTemplate = @"
+  $variablesTemplate = @"
     {
         "indicators": [
           {
@@ -123,13 +123,13 @@ function Get-CpThIncident {
         "includeShadowIT": true
       }
 "@
-    $variables = $variablesTemplate | ConvertFrom-Json
-    $fromTsStr = ((Get-Date).AddDays(-7)).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffK")
-    $toTsStr = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffK")
-    $variables.queryParam.dateRange.from = $fromTsStr
-    $variables.queryParam.dateRange.to = $toTsStr
+  $variables = $variablesTemplate | ConvertFrom-Json
+  $fromTsStr = ((Get-Date).AddDays(-7)).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffK")
+  $toTsStr = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffK")
+  $variables.queryParam.dateRange.from = $fromTsStr
+  $variables.queryParam.dateRange.to = $toTsStr
 
-    $query = '
+  $query = '
 query searchRecords($indicators: [Indicator]!, $queryParam: QueryParam, $includeRecordBase: Boolean!, $includeRecordProcess: Boolean!, $includeRecordFile: Boolean!, $includeRecordNetwork: Boolean!, $includeRecordRegistry: Boolean!, $includeRecordInject: Boolean!, $includeRecordEmail: Boolean!, $includeRecordRemoteLogon: Boolean!, $includeRecordScript: Boolean!, $includeDetectionEvent: Boolean!, $includeMitre: Boolean!, $includeShadowIT: Boolean!, $includeAdvancedActivity: Boolean!, $includeIndirectExecution: Boolean!, $includeRemoteExecution: Boolean!, $includeGWStats: Boolean!, $includeMTA: Boolean!, $includeLAAS: Boolean!) {
   searchRecords(indicators: $indicators, queryParam: $queryParam) {
     pagination {
@@ -1088,35 +1088,35 @@ query searchRecords($indicators: [Indicator]!, $queryParam: QueryParam, $include
 }
 '
 
-    $bodyObj = @{
-        operationName = "searchRecords";
-        variables     = $variables;
-        query         = $query
-    }
-    $body = $bodyObj | ConvertTo-Json -Depth 20
+  $bodyObj = @{
+    operationName = "searchRecords";
+    variables     = $variables;
+    query         = $query
+  }
+  $body = $bodyObj | ConvertTo-Json -Depth 20
 
-    $res = Invoke-RestMethod -Uri $url `
-        -Method Post `
-        -Headers $headers `
-        -Body $body 
+  $res = Invoke-RestMethod -Uri $url `
+    -Method Post `
+    -Headers $headers `
+    -Body $body 
 
-    $res.data.searchRecords
+  $res.data.searchRecords
 }
 
 function Get-CpThIncidentReport($reportId) {
-    $url = "https://cloudinfra-gw.portal.checkpoint.com/app/endpoint-web-mgmt/webmgmt/graphql" 
-    $portalToken = $Script:cpPortalToken
-    $epmToken = $Script:cpEpmToken
+  $url = "https://cloudinfra-gw.portal.checkpoint.com/app/endpoint-web-mgmt/webmgmt/graphql" 
+  $portalToken = $Script:cpPortalToken
+  $epmToken = $Script:cpEpmToken
     
-    $headers = @{
-        'Content-Type'  = 'application/json';
-        'Authorization' = "Bearer $portalToken";
-        token           = $epmToken
-    }
+  $headers = @{
+    'Content-Type'  = 'application/json';
+    'Authorization' = "Bearer $portalToken";
+    token           = $epmToken
+  }
 
-    $variables = @{ reportId = $reportId } 
+  $variables = @{ reportId = $reportId } 
     
-    $query = '
+  $query = '
     query getForensicsReportDetails($reportId: String!) {
         getForensicsReportDetails(incidentId: $reportId, timeFrame: "all-time") {
           incidentLog
@@ -1124,61 +1124,91 @@ function Get-CpThIncidentReport($reportId) {
         }
       }'
 
-    $body = @{
-        operationName = "getForensicsReportDetails";
-        variables     = $variables;
-        query         = $query
-    } | ConvertTo-Json -Depth 20
+  $body = @{
+    operationName = "getForensicsReportDetails";
+    variables     = $variables;
+    query         = $query
+  } | ConvertTo-Json -Depth 20
 
-    $res = Invoke-RestMethod -Uri $url `
-        -Method Post `
-        -Headers $headers `
-        -Body $body
+  $res = Invoke-RestMethod -Uri $url `
+    -Method Post `
+    -Headers $headers `
+    -Body $body
 
-    $res.data.getForensicsReportDetails
+  $res.data.getForensicsReportDetails
 }
 
 function Out-CpThIncidentReport($incidentLogBase64Str, $zipFilename) {
-    $decoded1 = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($incidentLogBase64Str))
-    $decoded2 = [System.Convert]::FromBase64String($decoded1)
-    [IO.File]::WriteAllBytes($zipFilename, $decoded2) 
+  $decoded1 = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($incidentLogBase64Str))
+  $decoded2 = [System.Convert]::FromBase64String($decoded1)
+  [IO.File]::WriteAllBytes($zipFilename, $decoded2) 
 }
 
 function Demo-IncidentList {
-    # login with TH key to get list of incidents
-    Write-Host "Login to Infinity Portal with TH key"
-    New-CPPortalSession $TH_KEY $TH_SECRET | Out-Null
-    # get list
-    Write-Host "Getting list of incidents"
-    $incidentList = (Get-CpThIncident).records 
-    $incidentList | select MachineName, @{n = "ProcessName"; e = { $_.Base.ProcessName } }, 
-        @{n = "Trigger"; e = { $_.DetectionEvent.DetectionTriggeredBy } }, 
-        @{n = "ProtectionName"; e = { $_.DetectionEvent.DetectionProtectionName } },
-        @{n = "iid"; e = { $_.DetectionEvent.DetectionIncidentId } }     
+  # login with TH key to get list of incidents
+  Write-Host "Login to Infinity Portal with TH key"
+  New-CPPortalSession $TH_KEY $TH_SECRET | Out-Null
+  # get list
+  Write-Host "Getting list of incidents"
+  $incidentList = (Get-CpThIncident).records 
+  $incidentList | select MachineName, @{n = "ProcessName"; e = { $_.Base.ProcessName } }, 
+  @{n = "Trigger"; e = { $_.DetectionEvent.DetectionTriggeredBy } }, 
+  @{n = "ProtectionName"; e = { $_.DetectionEvent.DetectionProtectionName } },
+  @{n = "iid"; e = { $_.DetectionEvent.DetectionIncidentId } }     
 }
 
 function Demo-SelectIncident {
-    $list =  Demo-IncidentList
-    $incident = $list | Out-ConsoleGridView -OutputMode Single
-    Write-Host "Selected $($incident.iid)"
-    Write-Host "Getting full list"
-    $fullList = (Get-CpThIncident).records 
-    $fullData = $fullList | ? {$_.DetectionEvent.DetectionIncidentId -eq $incident.iid }
-    Write-Host "Incident details:"
-    $fullData | ConvertTo-Json -Depth 20
+  $list = Demo-IncidentList
+  $incident = $list | Out-ConsoleGridView -OutputMode Single
+  Write-Host "Selected $($incident.iid)"
+  Write-Host "Getting full list"
+  $fullList = (Get-CpThIncident).records 
+  $fullData = $fullList | ? { $_.DetectionEvent.DetectionIncidentId -eq $incident.iid }
+  Write-Host "Incident details:"
+  $fullData | ConvertTo-Json -Depth 20
 }
 function Demo-CpThReportDownloadOne {
-    # login with TH key to get list of incidents
-    Write-Host "Login to Infinity Portal with TH key"
-    New-CPPortalSession $TH_KEY $TH_SECRET | Out-Null
-    # get list
-    Write-Host "Getting list of incidents"
-    $incidentList = (Get-CpThIncident).records 
-    $count = ($incidentList | Measure-Object).Count
-    Write-Host "Got $count records"
-    # get ID of first one
-    $iid = $incidentList | % { $_.DetectionEvent.DetectionIncidentId } | Select-Object -First 1 
-    Write-Host "First incident ID is $iid"
+  # login with TH key to get list of incidents
+  Write-Host "Login to Infinity Portal with TH key"
+  New-CPPortalSession $TH_KEY $TH_SECRET | Out-Null
+  # get list
+  Write-Host "Getting list of incidents"
+  $incidentList = (Get-CpThIncident).records 
+  $count = ($incidentList | Measure-Object).Count
+  Write-Host "Got $count records"
+  # get ID of first one
+  $iid = $incidentList | % { $_.DetectionEvent.DetectionIncidentId } | Select-Object -First 1 
+  Write-Host "First incident ID is $iid"
+  # API for forensics report download is EPM, login first with EP keys
+  Write-Host "Login to Infinity Portal with EP key"
+  New-CPPortalSession $EP_KEY $EP_SECRET | Out-Null
+  # need session on EPM too; based on portal identity
+  Write-Host "Login to EPM service"
+  New-CpEpmSession | Out-Null
+  # download report in base64 string
+  Write-Host "Downloading report for IID $iid"
+  $resp = Get-CpThIncidentReport $iid
+  # decode and save to ZIP
+  Write-Host "Saving report for IID $iid"
+  Out-CpThIncidentReport $resp.incidentLog "$iid.zip"
+    
+  Write-Host "Download done. Look at $iid.zip"
+  ls "$iid.zip"
+}
+
+function Demo-CpThReportDownloadAll {
+  # login with TH key to get list of incidents
+  Write-Host "Login to Infinity Portal with TH key"
+  New-CPPortalSession $TH_KEY $TH_SECRET | Out-Null
+  # get list
+  Write-Host "Getting list of incidents"
+  $incidentList = (Get-CpThIncident).records 
+  $count = ($incidentList | Measure-Object).Count
+  Write-Host "Got $count records"
+  # visit every single incident
+  $incidentList | % { $_.DetectionEvent.DetectionIncidentId } | ForEach-Object {
+    $iid = $_
+    Write-Host "Processing incident $iid"
     # API for forensics report download is EPM, login first with EP keys
     Write-Host "Login to Infinity Portal with EP key"
     New-CPPortalSession $EP_KEY $EP_SECRET | Out-Null
@@ -1191,39 +1221,53 @@ function Demo-CpThReportDownloadOne {
     # decode and save to ZIP
     Write-Host "Saving report for IID $iid"
     Out-CpThIncidentReport $resp.incidentLog "$iid.zip"
-    
+        
     Write-Host "Download done. Look at $iid.zip"
     ls "$iid.zip"
+  }
+  Write-Host "Done."
 }
 
-function Demo-CpThReportDownloadAll {
-    # login with TH key to get list of incidents
-    Write-Host "Login to Infinity Portal with TH key"
-    New-CPPortalSession $TH_KEY $TH_SECRET | Out-Null
-    # get list
-    Write-Host "Getting list of incidents"
-    $incidentList = (Get-CpThIncident).records 
-    $count = ($incidentList | Measure-Object).Count
-    Write-Host "Got $count records"
-    # visit every single incident
-    $incidentList | % { $_.DetectionEvent.DetectionIncidentId } | ForEach-Object {
-        $iid = $_
-        Write-Host "Processing incident $iid"
-        # API for forensics report download is EPM, login first with EP keys
-        Write-Host "Login to Infinity Portal with EP key"
-        New-CPPortalSession $EP_KEY $EP_SECRET | Out-Null
-        # need session on EPM too; based on portal identity
-        Write-Host "Login to EPM service"
-        New-CpEpmSession | Out-Null
-        # download report in base64 string
-        Write-Host "Downloading report for IID $iid"
-        $resp = Get-CpThIncidentReport $iid
-        # decode and save to ZIP
-        Write-Host "Saving report for IID $iid"
-        Out-CpThIncidentReport $resp.incidentLog "$iid.zip"
-        
-        Write-Host "Download done. Look at $iid.zip"
-        ls "$iid.zip"
-    }
-    Write-Host "Done."
+function indexIncidents {
+  
+  $incidentList | % {
+    '{ "index" : { "_index" : "incidents" } }' | Out-File -Append ./a.ndjson; 
+    $_ | ConvertTo-Json -Depth 99 -Compress | Out-File -Append a.ndjson
+  }
+}
+
+# index to ES
+# cat a.ndjson| curl http://localhost:4080/es/_bulk -i -u admin:Complexpass#123 --data-binary "@-"
+
+function esIndexIncidents {
+  $dataToIndex = $incidentList | % { return @(
+      '{ "index" : { "_index" : "incidents2" } }';
+      $_ | ConvertTo-Json -Depth 99 -Compress
+    )
+  } 
+  # join to text for one shot HTTP POST
+  iwr 'http://localhost:4080/es/_bulk' -Method Post -Headers @{
+    Authorization  = 'Basic YWRtaW46Q29tcGxleHBhc3MjMTIz';
+    'Content-Type' = 'application/json'
+  } -Body ( $dataToIndex -join "`n" )
+}
+
+# query from ES
+# curl 'http://localhost:4080/api/incidents/_search' \
+#  -H 'Authorization: Basic YWRtaW46Q29tcGxleHBhc3MjMTIz' \
+#  -H 'Content-Type: application/json' \
+#  --data-raw '{"search_type":"querystring","query":{"term":"*"},"fields":["_all"]}' -s | jq . | less
+
+function esQueryIncidents {
+  $headers = @{
+    Authorization  = 'Basic YWRtaW46Q29tcGxleHBhc3MjMTIz';
+    'Content-Type' = 'application/json'
+  }
+  $body = @{
+    'search_type' = 'querystring';
+    query         = @{term = '*' };
+    fields        = @('_all')
+  } | ConvertTo-Json -Depth 11 
+  $res = irm 'http://localhost:4080/api/incidents/_search' -Headers $headers -Body $body -Method Post
+  $res
 }
