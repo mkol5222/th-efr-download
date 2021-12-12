@@ -1268,6 +1268,6 @@ function esQueryIncidents {
     query         = @{term = '*' };
     fields        = @('_all')
   } | ConvertTo-Json -Depth 11 
-  $res = irm 'http://localhost:4080/api/incidents/_search' -Headers $headers -Body $body -Method Post
+  $res = irm 'http://localhost:4080/api/incidents2/_search' -Headers $headers -Body $body -Method Post
   $res
 }
